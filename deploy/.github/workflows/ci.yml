@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: auron
+          POSTGRES_USER: auron_user
+          POSTGRES_PASSWORD: auron_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U auron_user -d auron"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      APP_NAME: Auron API
+      APP_ENV: ci
+      API_V1_PREFIX: /api/v1
+      SECRET_KEY: test-secret
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      API_URL: http://localhost:8000
+      MEDIA_URL: http://localhost:8000/media
+      STORAGE_PATH: /tmp/auron-storage
+      POSTGRES_DB: auron
+      POSTGRES_USER: auron_user
+      POSTGRES_PASSWORD: auron_pass
+      DATABASE_URL: postgresql+psycopg2://auron_user:auron_pass@localhost:5432/auron
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Prepare storage
+        run: mkdir -p /tmp/auron-storage
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest
