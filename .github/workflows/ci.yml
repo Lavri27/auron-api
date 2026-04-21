@@ -55,6 +55,9 @@ jobs:
       - name: Prepare storage
         run: mkdir -p /tmp/auron-storage
 
+      - name: Run migrations
+        run: alembic upgrade head
+
       - name: Lint
         run: ruff check .
 
