@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16
+    restart: always
+    env_file:
+      - ../.env.prod
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - auron_net
+
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - ../.env.prod
+    depends_on:
+      - db
+    volumes:
+      - ../storage:/app/storage
+    networks:
+      - auron_net
+
+  nginx:
+    image: nginx:stable
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    volumes:
+      - ../nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../storage:/app/storage:ro
+    networks:
+      - auron_net
+
+volumes:
+  postgres_data:
+
+networks:
+  auron_net:
