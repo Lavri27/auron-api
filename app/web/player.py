@@ -21,9 +21,7 @@ def listen_page(track_id: int):
       --muted: #a7b0be;
       --border: #2a3040;
     }}
-
     * {{ box-sizing: border-box; }}
-
     body {{
       margin: 0;
       min-height: 100vh;
@@ -34,7 +32,6 @@ def listen_page(track_id: int):
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       padding: 24px;
     }}
-
     .card {{
       width: 100%;
       max-width: 460px;
@@ -45,7 +42,6 @@ def listen_page(track_id: int):
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(12px);
     }}
-
     .cover-wrap {{
       aspect-ratio: 1 / 1;
       background: #0a0c10;
@@ -53,7 +49,6 @@ def listen_page(track_id: int):
       place-items: center;
       overflow: hidden;
     }}
-
     .cover {{
       width: 100%;
       height: 100%;
@@ -61,11 +56,9 @@ def listen_page(track_id: int):
       display: block;
       background: #0a0c10;
     }}
-
     .content {{
       padding: 20px;
     }}
-
     .eyebrow {{
       font-size: 12px;
       letter-spacing: 0.08em;
@@ -73,25 +66,21 @@ def listen_page(track_id: int):
       color: var(--muted);
       margin-bottom: 10px;
     }}
-
     h1 {{
       margin: 0 0 8px;
       font-size: 28px;
       line-height: 1.15;
     }}
-
     .meta {{
       color: var(--muted);
       font-size: 15px;
       line-height: 1.5;
       margin-bottom: 18px;
     }}
-
     audio {{
       width: 100%;
       margin-top: 4px;
     }}
-
     .links {{
       margin-top: 16px;
       font-size: 14px;
@@ -100,17 +89,14 @@ def listen_page(track_id: int):
       gap: 12px;
       flex-wrap: wrap;
     }}
-
     .links a {{
       color: #c7d7ff;
       text-decoration: none;
     }}
-
     .status {{
       color: var(--muted);
       font-size: 14px;
     }}
-
     .error {{
       color: #ffb4b4;
     }}
@@ -157,60 +143,54 @@ def listen_page(track_id: int):
       </svg>
     `);
 
-    function mediaUrl(path) {{
+    function mediaUrl(path) {
       if (!path) return fallbackCover;
       if (path.startsWith("http://") || path.startsWith("https://")) return path;
-      return `/media/${{path.replace(/^\\/+/, "")}}`;
-    }}
+      return `/media/${path.replace(/^\/+/, "")}`;
+    }
 
-    async function getJson(url) {{
+    async function getJson(url) {
       const response = await fetch(url);
-      if (!response.ok) {{
-        throw new Error(`${{response.status}} ${{response.statusText}}`);
-      }}
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`);
+      }
       return response.json();
-    }}
+    }
 
-    async function loadPage() {{
-      try {{
-        const track = await getJson(`/api/v1/tracks/${{trackId}}`);
+    async function loadPage() {
+      try {
+        const track = await getJson(`/api/v1/tracks/${trackId}`);
         const [artist, album] = await Promise.all([
-          getJson(`/api/v1/artists/${{track.artist_id}}`),
-          track.album_id ? getJson(`/api/v1/albums/${{track.album_id}}`) : Promise.resolve(null),
+          getJson(`/api/v1/artists/${track.artist_id}`),
+          track.album_id ? getJson(`/api/v1/albums/${track.album_id}`) : Promise.resolve(null),
         ]);
 
-        const streamUrl = `/api/v1/tracks/${{trackId}}/stream/content`;
+        const streamUrl = `/api/v1/tracks/${trackId}/stream/content`;
         const coverPath = track.cover_path || (album && album.cover_path) || null;
 
-        document.title = `${{track.title}} — ${{artist.name}}`;
+        document.title = `${track.title} — ${artist.name}`;
         titleEl.textContent = track.title;
-        metaEl.textContent = album
-          ? `${{artist.name}} • ${{album.title}}`
-          : artist.name;
+        metaEl.textContent = album ? `${artist.name} • ${album.title}` : artist.name;
 
         coverEl.src = mediaUrl(coverPath);
-        coverEl.onerror = () => {{
-          coverEl.src = fallbackCover;
-        }};
+        coverEl.onerror = () => { coverEl.src = fallbackCover; };
 
         playerEl.src = streamUrl;
         streamLinkEl.href = streamUrl;
-        apiLinkEl.href = `/api/v1/tracks/${{trackId}}`;
+        apiLinkEl.href = `/api/v1/tracks/${trackId}`;
 
         const duration = Number(track.duration_sec || 0);
         const minutes = Math.floor(duration / 60);
         const seconds = String(duration % 60).padStart(2, "0");
-        statusEl.textContent = duration > 0
-          ? `Длительность: ${{minutes}}:${{seconds}}`
-          : "";
-      }} catch (error) {{
+        statusEl.textContent = duration > 0 ? `Длительность: ${minutes}:${seconds}` : "";
+      } catch (error) {
         document.title = "Ошибка загрузки";
         titleEl.textContent = "Не удалось открыть трек";
-        metaEl.innerHTML = `<span class="error">${{String(error.message || error)}}</span>`;
+        metaEl.innerHTML = `<span class="error">${String(error.message || error)}</span>`;
         coverEl.src = fallbackCover;
         statusEl.textContent = "Проверьте, существует ли track_id и загружены ли медиафайлы.";
-      }}
-    }}
+      }
+    }
 
     loadPage();
   </script>
