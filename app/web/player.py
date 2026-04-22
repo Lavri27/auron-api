@@ -6,23 +6,25 @@ router = APIRouter()
 
 @router.get("/listen/{track_id}", response_class=HTMLResponse)
 def listen_page(track_id: int):
-    html = f"""<!doctype html>
+    html = """<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Загрузка плеера…</title>
   <style>
-    :root {{
+    :root {
       color-scheme: dark;
       --bg: #0f1115;
       --card: #171a21;
       --text: #f3f5f7;
       --muted: #a7b0be;
       --border: #2a3040;
-    }}
-    * {{ box-sizing: border-box; }}
-    body {{
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
       margin: 0;
       min-height: 100vh;
       display: grid;
@@ -31,8 +33,9 @@ def listen_page(track_id: int):
       color: var(--text);
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       padding: 24px;
-    }}
-    .card {{
+    }
+
+    .card {
       width: 100%;
       max-width: 460px;
       background: rgba(23, 26, 33, 0.95);
@@ -41,65 +44,76 @@ def listen_page(track_id: int):
       overflow: hidden;
       box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
       backdrop-filter: blur(12px);
-    }}
-    .cover-wrap {{
+    }
+
+    .cover-wrap {
       aspect-ratio: 1 / 1;
       background: #0a0c10;
       display: grid;
       place-items: center;
       overflow: hidden;
-    }}
-    .cover {{
+    }
+
+    .cover {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
       background: #0a0c10;
-    }}
-    .content {{
+    }
+
+    .content {
       padding: 20px;
-    }}
-    .eyebrow {{
+    }
+
+    .eyebrow {
       font-size: 12px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 10px;
-    }}
-    h1 {{
+    }
+
+    h1 {
       margin: 0 0 8px;
       font-size: 28px;
       line-height: 1.15;
-    }}
-    .meta {{
+    }
+
+    .meta {
       color: var(--muted);
       font-size: 15px;
       line-height: 1.5;
       margin-bottom: 18px;
-    }}
-    audio {{
+    }
+
+    audio {
       width: 100%;
       margin-top: 4px;
-    }}
-    .links {{
+    }
+
+    .links {
       margin-top: 16px;
       font-size: 14px;
       color: var(--muted);
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
-    }}
-    .links a {{
+    }
+
+    .links a {
       color: #c7d7ff;
       text-decoration: none;
-    }}
-    .status {{
+    }
+
+    .status {
       color: var(--muted);
       font-size: 14px;
-    }}
-    .error {{
+    }
+
+    .error {
       color: #ffb4b4;
-    }}
+    }
   </style>
 </head>
 <body>
@@ -125,7 +139,7 @@ def listen_page(track_id: int):
   </main>
 
   <script>
-    const trackId = {track_id};
+    const trackId = __TRACK_ID__;
     const titleEl = document.getElementById("title");
     const metaEl = document.getElementById("meta");
     const coverEl = document.getElementById("cover");
@@ -160,10 +174,8 @@ def listen_page(track_id: int):
     async function loadPage() {
       try {
         const track = await getJson(`/api/v1/tracks/${trackId}`);
-        const [artist, album] = await Promise.all([
-          getJson(`/api/v1/artists/${track.artist_id}`),
-          track.album_id ? getJson(`/api/v1/albums/${track.album_id}`) : Promise.resolve(null),
-        ]);
+        const artist = await getJson(`/api/v1/artists/${track.artist_id}`);
+        const album = track.album_id ? await getJson(`/api/v1/albums/${track.album_id}`) : null;
 
         const streamUrl = `/api/v1/tracks/${trackId}/stream/content`;
         const coverPath = track.cover_path || (album && album.cover_path) || null;
@@ -173,7 +185,9 @@ def listen_page(track_id: int):
         metaEl.textContent = album ? `${artist.name} • ${album.title}` : artist.name;
 
         coverEl.src = mediaUrl(coverPath);
-        coverEl.onerror = () => { coverEl.src = fallbackCover; };
+        coverEl.onerror = function () {
+          coverEl.src = fallbackCover;
+        };
 
         playerEl.src = streamUrl;
         streamLinkEl.href = streamUrl;
@@ -196,5 +210,6 @@ def listen_page(track_id: int):
   </script>
 </body>
 </html>
-"""
+""".replace("__TRACK_ID__", str(track_id))
+
     return HTMLResponse(content=html)
