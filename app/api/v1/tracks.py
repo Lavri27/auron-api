@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_admin, get_db
 from app.models.track import Track
-from app.schemas.track import TrackCreate, TrackUpdate, TrackRead, StreamResponse
+from app.schemas.track import StreamResponse, TrackCreate, TrackRead, TrackUpdate
 from app.services.track_service import TrackService
 
 router = APIRouter()
@@ -36,12 +36,31 @@ def get_track(track_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{track_id}/stream", response_model=StreamResponse)
-def stream_track(track_id: int, db: Session = Depends(get_db)):
+def get_track_stream_info(track_id: int, db: Session = Depends(get_db)):
     track = TrackService.get(db, track_id)
     if not track:
         raise HTTPException(404, "Track not found")
-
     return TrackService.get_stream(track)
+
+
+@router.head("/{track_id}/stream/content", status_code=200)
+def head_track_stream(track_id: int, db: Session = Depends(get_db)):
+    track = TrackService.get(db, track_id)
+    if not track:
+        raise HTTPException(404, "Track not found")
+    return TrackService.stream_head(track)
+
+
+@router.get("/{track_id}/stream/content")
+def stream_track_content(
+    track_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    track = TrackService.get(db, track_id)
+    if not track:
+        raise HTTPException(404, "Track not found")
+    return TrackService.stream_content(request, track)
 
 
 @router.patch("/{track_id}", response_model=TrackRead)
@@ -54,7 +73,6 @@ def update_track(
     track = db.get(Track, track_id)
     if not track:
         raise HTTPException(404, "Track not found")
-
     return TrackService.update(
         db,
         track,
@@ -71,6 +89,5 @@ def delete_track(
     track = db.get(Track, track_id)
     if not track:
         raise HTTPException(404, "Track not found")
-
     TrackService.delete(db, track)
     return {"status": "deleted"}

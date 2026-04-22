@@ -1,7 +1,8 @@
+from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.models.track import Track
+from app.services.audio_stream_service import AudioStreamService
 from app.utils.pagination import paginate
 
 
@@ -26,18 +27,40 @@ class TrackService:
     @staticmethod
     def get_stream(track: Track):
         if not track.audio_path:
-            raise ValueError("Track file not uploaded")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Track file not uploaded",
+            )
 
-        return {
-            "track_id": track.id,
-            "stream_url": f"{settings.media_url}/{track.audio_path}",
-        }
+        return AudioStreamService.build_stream_info(
+            track_id=track.id,
+            audio_path=track.audio_path,
+        )
+
+    @staticmethod
+    def stream_content(request: Request, track: Track):
+        if not track.audio_path:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Track file not uploaded",
+            )
+
+        return AudioStreamService.stream(request, track.audio_path)
+
+    @staticmethod
+    def stream_head(track: Track):
+        if not track.audio_path:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Track file not uploaded",
+            )
+
+        return AudioStreamService.head_response(track.audio_path)
 
     @staticmethod
     def update(db: Session, track: Track, data: dict):
-        for k, v in data.items():
-            setattr(track, k, v)
-
+        for key, value in data.items():
+            setattr(track, key, value)
         db.commit()
         db.refresh(track)
         return track

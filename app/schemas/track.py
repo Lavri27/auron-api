@@ -30,3 +30,7 @@ class TrackRead(ORMModel):
 class StreamResponse(ORMModel):
     track_id: int
     stream_url: str
+    content_type: str
+    content_length: int
+    accept_ranges: str
+    supports_seek: bool
