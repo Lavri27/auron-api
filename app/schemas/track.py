@@ -22,6 +22,7 @@ class TrackRead(ORMModel):
     album_id: int | None
     title: str
     audio_path: str | None
+    cover_path: str | None
     duration_sec: int
     is_public: bool
     created_at: datetime
