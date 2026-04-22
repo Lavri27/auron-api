@@ -15,6 +15,7 @@ class Track(Base):
 
     title: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     audio_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    cover_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     preview_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     duration_sec: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     is_public: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

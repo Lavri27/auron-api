@@ -22,6 +22,7 @@ class TrackRead(ORMModel):
     album_id: int | None
     title: str
     audio_path: str | None
+    cover_path: str | None
     duration_sec: int
     is_public: bool
     created_at: datetime
@@ -30,3 +31,7 @@ class TrackRead(ORMModel):
 class StreamResponse(ORMModel):
     track_id: int
     stream_url: str
+    content_type: str
+    content_length: int
+    accept_ranges: str
+    supports_seek: bool

@@ -42,6 +42,22 @@ def upload_album_cover(
     return {"cover_path": album.cover_path}
 
 
+@router.post("/tracks/{track_id}/cover")
+def upload_track_cover(
+    track_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    _admin=Depends(get_current_admin),
+):
+    track = db.get(Track, track_id)
+    if not track:
+        raise HTTPException(status_code=404, detail="Track not found")
+
+    track.cover_path = StorageService.save_file(file, "covers")
+    db.commit()
+    return {"cover_path": track.cover_path}
+
+
 @router.post("/tracks/{track_id}/file")
 def upload_track_file(
     track_id: int,
