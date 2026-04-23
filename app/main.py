@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.v1 import admin, albums, artists, auth, author, history, likes, playback, playlists, search, tracks
 from app.core.config import settings
-from app.web.player import router as player_router
+from app.web.smoke_player import router as smoke_player_router
 
 app = FastAPI(title=settings.app_name)
 
@@ -29,7 +29,8 @@ app.include_router(history.router, prefix="/api/v1/history", tags=["history"])
 app.include_router(search.router, prefix="/api/v1/search", tags=["search"])
 app.include_router(playback.router, prefix="/api/v1/playback", tags=["playback"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
-app.include_router(player_router, tags=["player"])
+
+app.include_router(smoke_player_router, tags=["smoke"])
 
 
 @app.get("/health")
