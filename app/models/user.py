@@ -13,8 +13,12 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     username: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_author: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
     playlists = relationship("Playlist", back_populates="user", cascade="all, delete-orphan")
+    artists = relationship("Artist", back_populates="owner")

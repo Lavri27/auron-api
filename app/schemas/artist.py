@@ -15,6 +15,7 @@ class ArtistUpdate(ORMModel):
 
 class ArtistRead(ORMModel):
     id: int
+    owner_user_id: int | None
     name: str
     bio: str | None
     image_path: str | None

@@ -3,20 +3,26 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_current_admin, get_db
 from app.models.album import Album
-from app.schemas.album import AlbumCreate, AlbumUpdate, AlbumRead
+from app.schemas.album import AlbumCreate, AlbumRead, AlbumUpdate
 from app.utils.pagination import paginate
 
 router = APIRouter()
 
 
-@router.get("/", response_model=dict)
+def _serialize_paginated(query, limit: int, offset: int, schema):
+    data = paginate(query, limit, offset)
+    data["items"] = [schema.model_validate(item).model_dump() for item in data["items"]]
+    return data
+
+
+@router.get("/")
 def list_albums(
     db: Session = Depends(get_db),
-    limit: int = Query(20),
-    offset: int = Query(0),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
 ):
     query = db.query(Album).order_by(Album.id.desc())
-    return paginate(query, limit, offset)
+    return _serialize_paginated(query, limit, offset, AlbumRead)
 
 
 @router.post("/", response_model=AlbumRead)

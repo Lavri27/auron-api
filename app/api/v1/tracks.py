@@ -9,13 +9,19 @@ from app.services.track_service import TrackService
 router = APIRouter()
 
 
-@router.get("/", response_model=dict)
+def _serialize_paginated(data):
+    data["items"] = [TrackRead.model_validate(item).model_dump() for item in data["items"]]
+    return data
+
+
+@router.get("/")
 def list_tracks(
     db: Session = Depends(get_db),
-    limit: int = Query(20),
-    offset: int = Query(0),
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
 ):
-    return TrackService.list_public(db, limit, offset)
+    data = TrackService.list_public(db, limit, offset)
+    return _serialize_paginated(data)
 
 
 @router.post("/", response_model=TrackRead)
@@ -24,12 +30,15 @@ def create_track(
     db: Session = Depends(get_db),
     _admin=Depends(get_current_admin),
 ):
-    return TrackService.create(db, data.model_dump())
+    payload = data.model_dump()
+    payload.setdefault("is_public", True)
+    payload.setdefault("is_published", True)
+    return TrackService.create(db, payload)
 
 
 @router.get("/{track_id}", response_model=TrackRead)
 def get_track(track_id: int, db: Session = Depends(get_db)):
-    track = TrackService.get(db, track_id)
+    track = TrackService.get_public(db, track_id)
     if not track:
         raise HTTPException(404, "Track not found")
     return track
@@ -37,7 +46,7 @@ def get_track(track_id: int, db: Session = Depends(get_db)):
 
 @router.get("/{track_id}/stream", response_model=StreamResponse)
 def get_track_stream_info(track_id: int, db: Session = Depends(get_db)):
-    track = TrackService.get(db, track_id)
+    track = TrackService.get_public(db, track_id)
     if not track:
         raise HTTPException(404, "Track not found")
     return TrackService.get_stream(track)
@@ -45,7 +54,7 @@ def get_track_stream_info(track_id: int, db: Session = Depends(get_db)):
 
 @router.head("/{track_id}/stream/content", status_code=200)
 def head_track_stream(track_id: int, db: Session = Depends(get_db)):
-    track = TrackService.get(db, track_id)
+    track = TrackService.get_public(db, track_id)
     if not track:
         raise HTTPException(404, "Track not found")
     return TrackService.stream_head(track)
@@ -57,7 +66,7 @@ def stream_track_content(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    track = TrackService.get(db, track_id)
+    track = TrackService.get_public(db, track_id)
     if not track:
         raise HTTPException(404, "Track not found")
     return TrackService.stream_content(request, track)

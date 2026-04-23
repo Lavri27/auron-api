@@ -7,13 +7,19 @@ class TrackCreate(ORMModel):
     artist_id: int
     album_id: int | None = None
     title: str
+    description: str | None = None
+    genre: str | None = None
     duration_sec: int = 0
 
 
 class TrackUpdate(ORMModel):
     title: str | None = None
+    description: str | None = None
+    genre: str | None = None
+    album_id: int | None = None
     duration_sec: int | None = None
     is_public: bool | None = None
+    is_published: bool | None = None
 
 
 class TrackRead(ORMModel):
@@ -21,10 +27,14 @@ class TrackRead(ORMModel):
     artist_id: int
     album_id: int | None
     title: str
+    description: str | None
+    genre: str | None
     audio_path: str | None
     cover_path: str | None
+    preview_path: str | None
     duration_sec: int
     is_public: bool
+    is_published: bool
     created_at: datetime
 
 

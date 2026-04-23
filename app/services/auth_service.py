@@ -30,6 +30,7 @@ class AuthService:
             email=payload.email,
             username=payload.username,
             password_hash=hash_password(payload.password),
+            is_author=payload.is_author,
         )
         db.add(user)
         db.commit()

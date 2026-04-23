@@ -1,5 +1,5 @@
 from fastapi import HTTPException, Request, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.track import Track
 from app.services.audio_stream_service import AudioStreamService
@@ -17,12 +17,32 @@ class TrackService:
 
     @staticmethod
     def list_public(db: Session, limit: int, offset: int):
-        query = db.query(Track).filter(Track.is_public.is_(True))
+        query = (
+            db.query(Track)
+            .options(joinedload(Track.artist), joinedload(Track.album))
+            .filter(
+                Track.is_public.is_(True),
+                Track.is_published.is_(True),
+            )
+            .order_by(Track.id.desc())
+        )
         return paginate(query, limit, offset)
 
     @staticmethod
     def get(db: Session, track_id: int) -> Track | None:
         return db.query(Track).filter(Track.id == track_id).first()
+
+    @staticmethod
+    def get_public(db: Session, track_id: int) -> Track | None:
+        return (
+            db.query(Track)
+            .filter(
+                Track.id == track_id,
+                Track.is_public.is_(True),
+                Track.is_published.is_(True),
+            )
+            .first()
+        )
 
     @staticmethod
     def get_stream(track: Track):

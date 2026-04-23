@@ -19,6 +19,10 @@ class StorageService:
 
         file_path = base_dir / filename
         with file_path.open("wb") as buffer:
-            buffer.write(upload.file.read())
+            while True:
+                chunk = upload.file.read(1024 * 1024)
+                if not chunk:
+                    break
+                buffer.write(chunk)
 
         return f"{subdir}/{filename}"
