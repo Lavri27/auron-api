@@ -32,7 +32,6 @@ def listen_page(track_id: int):
       color-scheme: dark;
       --bg: #0b0f14;
       --panel: #121821;
-      --panel-2: #192230;
       --text: #ecf3ff;
       --muted: #9fb0c7;
       --line: rgba(255,255,255,0.08);
@@ -43,9 +42,7 @@ def listen_page(track_id: int):
       --radius: 22px;
     }}
 
-    * {{
-      box-sizing: border-box;
-    }}
+    * {{ box-sizing: border-box; }}
 
     html, body {{
       margin: 0;
@@ -59,9 +56,7 @@ def listen_page(track_id: int):
       min-height: 100%;
     }}
 
-    body {{
-      padding: 32px 18px 48px;
-    }}
+    body {{ padding: 32px 18px 48px; }}
 
     .wrap {{
       width: min(1100px, 100%);
@@ -99,9 +94,7 @@ def listen_page(track_id: int):
       backdrop-filter: blur(10px);
     }}
 
-    .cover-card {{
-      padding: 18px;
-    }}
+    .cover-card {{ padding: 18px; }}
 
     .cover-wrap {{
       position: relative;
@@ -119,9 +112,7 @@ def listen_page(track_id: int):
       display: block;
     }}
 
-    .meta-card {{
-      padding: 24px;
-    }}
+    .meta-card {{ padding: 24px; }}
 
     .title {{
       margin: 0;
@@ -240,9 +231,7 @@ def listen_page(track_id: int):
 <body>
   <div class="wrap">
     <div class="badge">Smoke API Test · /listen/{track_id}</div>
-
     <div id="app" class="loading">Загрузка трека…</div>
-
     <div class="footer-note">
       Эта страница предназначена для ручной проверки streaming, metadata, cover loading и player UI.
     </div>
@@ -263,6 +252,15 @@ def listen_page(track_id: int):
         throw new Error(`HTTP ${{response.status}} for ${{url}}`);
       }}
       return response.json();
+    }}
+
+    async function tryGetJson(url) {{
+      try {{
+        return await getJson(url);
+      }} catch (e) {{
+        console.warn("Optional fetch failed:", url, e);
+        return null;
+      }}
     }}
 
     function fallbackCoverSvg(title = "Auron") {{
@@ -289,17 +287,17 @@ def listen_page(track_id: int):
 
     async function init() {{
       const app = document.getElementById("app");
+      const streamUrl = `/api/v1/tracks/${{trackId}}/stream/content`;
 
       try {{
         const track = await getJson(`/api/v1/tracks/${{trackId}}`);
-        const artist = await getJson(`/api/v1/artists/${{track.artist_id}}`);
-        const album = track.album_id ? await getJson(`/api/v1/albums/${{track.album_id}}`) : null;
+        const artist = await tryGetJson(`/api/v1/artists/${{track.artist_id}}`);
+        const album = track.album_id ? await tryGetJson(`/api/v1/albums/${{track.album_id}}`) : null;
 
         const coverPath = track.cover_path || (album && album.cover_path) || null;
         const coverSrc = coverPath ? mediaUrl(coverPath) : fallbackCoverSvg(track.title || "Auron");
-        const streamUrl = `/api/v1/tracks/${{trackId}}/stream/content`;
 
-        document.title = `${{track.title}} — ${{artist.name}}`;
+        document.title = artist?.name ? `${{track.title}} — ${{artist.name}}` : `${{track.title}} — Auron`;
 
         app.className = "";
         app.innerHTML = `
@@ -313,7 +311,7 @@ def listen_page(track_id: int):
             <section class="card meta-card">
               <h1 class="title">${{track.title}}</h1>
               <div class="subtitle">
-                ${{artist.name}}${{album ? ` · ${{album.title}}` : ""}}
+                ${{artist?.name || "Unknown artist"}}${{album ? ` · ${{album.title}}` : ""}}
               </div>
 
               <div class="grid">
@@ -337,7 +335,7 @@ def listen_page(track_id: int):
 
               <div class="player-block">
                 <div style="font-size:14px; color: var(--muted);">Streaming playback</div>
-                <audio controls preload="metadata" src="${{streamUrl}}"></audio>
+                <audio id="player" controls preload="metadata" src="${{streamUrl}}"></audio>
 
                 <div class="stream-link">
                   Stream endpoint:
@@ -352,6 +350,12 @@ def listen_page(track_id: int):
         const img = app.querySelector(".cover");
         img.addEventListener("error", () => {{
           img.src = fallbackCoverSvg(track.title || "Auron");
+        }});
+
+        const player = document.getElementById("player");
+        player.addEventListener("error", () => {{
+          const mediaError = player.error;
+          console.error("Audio element error:", mediaError);
         }});
       }} catch (error) {{
         console.error(error);
